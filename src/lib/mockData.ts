@@ -165,6 +165,3 @@ export function generateAIInsights(): AIInsight[] {
   ];
 }
 
-export const mockTimeEntries = generateMockTimeEntries(3);
-export const mockProjectMetrics = generateProjectMetrics(mockTimeEntries);
-export const mockAIInsights = generateAIInsights();

@@ -1,5 +1,5 @@
 import { AlertTriangle, TrendingUp, AlertCircle, Info } from 'lucide-react';
-import { mockAIInsights } from '../lib/mockData';
+import { useFilters } from '../contexts/FilterContext';
 
 const severityConfig = {
   high: {
@@ -31,7 +31,8 @@ const categoryLabels: Record<string, string> = {
 };
 
 export function AIInsights() {
-  const insights = mockAIInsights.sort((a, b) => (a.priority || 99) - (b.priority || 99));
+  const { aiInsights } = useFilters();
+  const insights = [...aiInsights].sort((a, b) => (a.priority || 99) - (b.priority || 99));
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">

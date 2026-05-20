@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Filter, X, Calendar, ChevronDown } from 'lucide-react';
 import { useFilters } from '../contexts/FilterContext';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export function FilterPanel() {
   const { filters, setFilters, resetFilters, availableOptions, filteredEntries } = useFilters();
@@ -16,6 +16,34 @@ export function FilterPanel() {
     filters.statuses.length,
     filters.practices.length
   ].reduce((sum, count) => sum + count, 0);
+
+  const setDateRange = (start: Date, end: Date) => {
+    setFilters({ dateRange: { start, end } });
+  };
+
+  const presets = [
+    {
+      label: 'Este mes',
+      range: {
+        start: startOfMonth(new Date()),
+        end: endOfMonth(new Date())
+      }
+    },
+    {
+      label: 'Últimos 3 meses',
+      range: {
+        start: startOfMonth(subMonths(new Date(), 2)),
+        end: endOfMonth(new Date())
+      }
+    },
+    {
+      label: 'Últimos 6 meses',
+      range: {
+        start: startOfMonth(subMonths(new Date(), 5)),
+        end: endOfMonth(new Date())
+      }
+    }
+  ];
 
   const MultiSelectFilter = ({
     label,
@@ -67,8 +95,8 @@ export function FilterPanel() {
   return (
     <>
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
@@ -107,7 +135,48 @@ export function FilterPanel() {
       </div>
 
       {isOpen && (
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 space-y-6">
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {presets.map(preset => (
+                <button
+                  key={preset.label}
+                  onClick={() => setDateRange(preset.range.start, preset.range.end)}
+                  className="px-3 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg transition-colors"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="space-y-2 text-sm text-gray-400">
+                <span>Desde</span>
+                <input
+                  type="date"
+                  value={format(filters.dateRange.start, 'yyyy-MM-dd')}
+                  onChange={(e) => {
+                    const nextStart = new Date(e.target.value);
+                    setDateRange(nextStart, nextStart > filters.dateRange.end ? nextStart : filters.dateRange.end);
+                  }}
+                  className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white"
+                />
+              </label>
+              <label className="space-y-2 text-sm text-gray-400">
+                <span>Hasta</span>
+                <input
+                  type="date"
+                  value={format(filters.dateRange.end, 'yyyy-MM-dd')}
+                  onChange={(e) => {
+                    const nextEnd = new Date(e.target.value);
+                    setDateRange(filters.dateRange.start, nextEnd < filters.dateRange.start ? filters.dateRange.start : nextEnd);
+                  }}
+                  className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white"
+                />
+              </label>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MultiSelectFilter
               label="Clientes"

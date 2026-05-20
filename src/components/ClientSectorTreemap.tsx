@@ -75,7 +75,7 @@ export function ClientSectorTreemap() {
             fontSize={depth === 1 ? 14 : 11}
             fontWeight={depth === 1 ? 'bold' : 'normal'}
           >
-            {name.length > 15 ? `${name.substring(0, 15)}...` : name}
+            {name && name.length > 15 ? `${name.substring(0, 15)}...` : name}
           </text>
         )}
       </g>

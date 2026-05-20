@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useMemo, ReactNode } from 'react';
-import { startOfMonth, endOfMonth } from 'date-fns';
-import { FilterState, TimeEntry } from '../types/analytics';
-import { mockTimeEntries } from '../lib/mockData';
+import { createContext, useContext, useState, useMemo, useEffect, ReactNode } from 'react';
+import { startOfMonth, endOfMonth, format, subMonths } from 'date-fns';
+import { FilterState, TimeEntry, AIInsight } from '../types/analytics';
+import { supabase } from '../lib/supabase';
 
 interface FilterContextType {
   filters: FilterState;
@@ -17,6 +17,8 @@ interface FilterContextType {
     statuses: string[];
     practices: string[];
   };
+  aiInsights: AIInsight[];
+  loading: boolean;
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
@@ -35,8 +37,13 @@ const defaultFilters: FilterState = {
   practices: []
 };
 
+const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');
+
 export function FilterProvider({ children }: { children: ReactNode }) {
   const [filters, setFiltersState] = useState<FilterState>(defaultFilters);
+  const [filteredEntries, setFilteredEntries] = useState<TimeEntry[]>([]);
+  const [aiInsights, setAIInsights] = useState<AIInsight[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const setFilters = (newFilters: Partial<FilterState>) => {
     setFiltersState(prev => ({ ...prev, ...newFilters }));
@@ -46,45 +53,89 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     setFiltersState(defaultFilters);
   };
 
-  const filteredEntries = useMemo(() => {
-    return mockTimeEntries.filter(entry => {
-      const entryDate = new Date(entry.work_date);
+  const loadEntries = async (activeFilters: FilterState) => {
+    setLoading(true);
 
-      if (entryDate < filters.dateRange.start || entryDate > filters.dateRange.end) {
-        return false;
-      }
+    const start = formatDate(activeFilters.dateRange.start);
+    const end = formatDate(activeFilters.dateRange.end);
 
-      if (filters.clients.length > 0 && !filters.clients.includes(entry.client_name || '')) {
-        return false;
-      }
+    let query = supabase
+      .from<TimeEntry>('time_entries')
+      .select('*')
+      .gte('work_date', start)
+      .lte('work_date', end)
+      .order('work_date', { ascending: true });
 
-      if (filters.projects.length > 0 && !filters.projects.includes(entry.project_name || '')) {
-        return false;
-      }
+    if (activeFilters.clients.length > 0) {
+      query = query.in('client_name', activeFilters.clients);
+    }
+    if (activeFilters.projects.length > 0) {
+      query = query.in('project_name', activeFilters.projects);
+    }
+    if (activeFilters.sectors.length > 0) {
+      query = query.in('sector', activeFilters.sectors);
+    }
+    if (activeFilters.areas.length > 0) {
+      query = query.in('project_area', activeFilters.areas);
+    }
+    if (activeFilters.users.length > 0) {
+      query = query.in('user_name', activeFilters.users);
+    }
+    if (activeFilters.statuses.length > 0) {
+      query = query.in('status', activeFilters.statuses);
+    }
+    if (activeFilters.practices.length > 0) {
+      query = query.in('practice_area', activeFilters.practices);
+    }
 
-      if (filters.sectors.length > 0 && !filters.sectors.includes(entry.sector || '')) {
-        return false;
-      }
+    const { data, error } = await query;
 
-      if (filters.areas.length > 0 && !filters.areas.includes(entry.project_area || '')) {
-        return false;
-      }
+    if (error) {
+      console.error('Supabase error loading time entries:', error.message);
+      setFilteredEntries([]);
+      setLoading(false);
+      return;
+    }
 
-      if (filters.users.length > 0 && !filters.users.includes(entry.user_name)) {
-        return false;
-      }
+    setFilteredEntries(
+      (data ?? []).map(entry => ({
+        ...entry,
+        minutes: Number(entry.minutes),
+        hourly_rate:
+          entry.hourly_rate !== null && entry.hourly_rate !== undefined
+            ? Number(entry.hourly_rate)
+            : undefined,
+        total:
+          entry.total !== null && entry.total !== undefined ? Number(entry.total) : undefined,
+        work_date: String(entry.work_date),
+        created_at: String(entry.created_at)
+      }))
+    );
+    setLoading(false);
+  };
 
-      if (filters.statuses.length > 0 && !filters.statuses.includes(entry.status || '')) {
-        return false;
-      }
+  const loadAIInsights = async () => {
+    const { data, error } = await supabase
+      .from<AIInsight>('ai_insights')
+      .select('*')
+      .order('generated_at', { ascending: false });
 
-      if (filters.practices.length > 0 && !filters.practices.includes(entry.practice_area || '')) {
-        return false;
-      }
+    if (error) {
+      console.error('Supabase error loading AI insights:', error.message);
+      setAIInsights([]);
+      return;
+    }
 
-      return true;
-    });
+    setAIInsights(data ?? []);
+  };
+
+  useEffect(() => {
+    loadEntries(filters);
   }, [filters]);
+
+  useEffect(() => {
+    loadAIInsights();
+  }, []);
 
   const availableOptions = useMemo(() => {
     const clients = new Set<string>();
@@ -95,7 +146,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     const statuses = new Set<string>();
     const practices = new Set<string>();
 
-    mockTimeEntries.forEach(entry => {
+    filteredEntries.forEach(entry => {
       if (entry.client_name) clients.add(entry.client_name);
       if (entry.project_name) projects.add(entry.project_name);
       if (entry.sector) sectors.add(entry.sector);
@@ -114,10 +165,20 @@ export function FilterProvider({ children }: { children: ReactNode }) {
       statuses: Array.from(statuses).sort(),
       practices: Array.from(practices).sort()
     };
-  }, []);
+  }, [filteredEntries]);
 
   return (
-    <FilterContext.Provider value={{ filters, setFilters, resetFilters, filteredEntries, availableOptions }}>
+    <FilterContext.Provider
+      value={{
+        filters,
+        setFilters,
+        resetFilters,
+        filteredEntries,
+        availableOptions,
+        aiInsights,
+        loading
+      }}
+    >
       {children}
     </FilterContext.Provider>
   );

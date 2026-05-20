@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Clock, DollarSign, Users, Briefcase, Target } from 'lucide-react';
 import { useFilters } from '../contexts/FilterContext';
-import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
-import { mockTimeEntries } from '../lib/mockData';
 
 interface KPICardProps {
   title: string;
@@ -73,12 +71,11 @@ export function KPICards() {
     });
     const topClient = Array.from(clientHours.entries()).sort((a, b) => b[1] - a[1])[0];
 
-    const lastMonth = mockTimeEntries.filter(e => {
-      const date = new Date(e.work_date);
-      return date >= startOfMonth(subMonths(new Date(), 1)) && date <= endOfMonth(subMonths(new Date(), 1));
-    });
-    const lastMonthHours = lastMonth.reduce((sum, e) => sum + e.minutes, 0) / 60;
-    const variation = lastMonthHours > 0 ? ((totalHours - lastMonthHours) / lastMonthHours) * 100 : 0;
+    const sortedEntries = [...filteredEntries].sort((a, b) => a.work_date.localeCompare(b.work_date));
+    const midpoint = Math.floor(sortedEntries.length / 2);
+    const firstHalfHours = sortedEntries.slice(0, midpoint).reduce((sum, e) => sum + e.minutes, 0) / 60;
+    const secondHalfHours = sortedEntries.slice(midpoint).reduce((sum, e) => sum + e.minutes, 0) / 60;
+    const variation = firstHalfHours > 0 ? ((secondHalfHours - firstHalfHours) / firstHalfHours) * 100 : 0;
 
     const avgRate = totalHours > 0 ? totalCost / totalHours : 0;
     const estimatedRevenue = totalCost * 1.4;
