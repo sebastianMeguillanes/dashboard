@@ -29,7 +29,7 @@ function KPICard({ title, value, subtitle, trend, icon, sparkline }: KPICardProp
         )}
       </div>
       <div className="space-y-1">
-        <p className="text-sm text-gray-400">{title}</p>
+        <p className="text-2xl text-gray-400">{title}</p>
         <p className="text-3xl font-semibold text-white">{value}</p>
         <p className="text-2xl text-gray-500">{subtitle}</p>
       </div>
