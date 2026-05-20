@@ -58,47 +58,52 @@ export function FilterProvider({ children }: { children: ReactNode }) {
 
     const start = formatDate(activeFilters.dateRange.start);
     const end = formatDate(activeFilters.dateRange.end);
+    const batchSize = 1000;
+    let from = 0;
+    let allEntries: TimeEntry[] = [];
+    let shouldContinue = true;
 
-    let query = supabase
-      .from<TimeEntry>('time_entries')
-      .select('*')
-      .gte('work_date', start)
-      .lte('work_date', end)
-      .order('work_date', { ascending: true });
+    while (shouldContinue) {
+      let query = supabase
+        .from<TimeEntry>('time_entries')
+        .select('*', { count: 'exact' })
+        .gte('work_date', start)
+        .lte('work_date', end)
+        .order('work_date', { ascending: true })
+        .range(from, from + batchSize - 1);
 
-    if (activeFilters.clients.length > 0) {
-      query = query.in('client_name', activeFilters.clients);
-    }
-    if (activeFilters.projects.length > 0) {
-      query = query.in('project_name', activeFilters.projects);
-    }
-    if (activeFilters.sectors.length > 0) {
-      query = query.in('sector', activeFilters.sectors);
-    }
-    if (activeFilters.areas.length > 0) {
-      query = query.in('project_area', activeFilters.areas);
-    }
-    if (activeFilters.users.length > 0) {
-      query = query.in('user_name', activeFilters.users);
-    }
-    if (activeFilters.statuses.length > 0) {
-      query = query.in('status', activeFilters.statuses);
-    }
-    if (activeFilters.practices.length > 0) {
-      query = query.in('practice_area', activeFilters.practices);
-    }
+      if (activeFilters.clients.length > 0) {
+        query = query.in('client_name', activeFilters.clients);
+      }
+      if (activeFilters.projects.length > 0) {
+        query = query.in('project_name', activeFilters.projects);
+      }
+      if (activeFilters.sectors.length > 0) {
+        query = query.in('sector', activeFilters.sectors);
+      }
+      if (activeFilters.areas.length > 0) {
+        query = query.in('project_area', activeFilters.areas);
+      }
+      if (activeFilters.users.length > 0) {
+        query = query.in('user_name', activeFilters.users);
+      }
+      if (activeFilters.statuses.length > 0) {
+        query = query.in('status', activeFilters.statuses);
+      }
+      if (activeFilters.practices.length > 0) {
+        query = query.in('practice_area', activeFilters.practices);
+      }
 
-    const { data, error } = await query;
+      const { data, error } = await query;
 
-    if (error) {
-      console.error('Supabase error loading time entries:', error.message);
-      setFilteredEntries([]);
-      setLoading(false);
-      return;
-    }
+      if (error) {
+        console.error('Supabase error loading time entries:', error.message);
+        setFilteredEntries([]);
+        setLoading(false);
+        return;
+      }
 
-    setFilteredEntries(
-      (data ?? []).map(entry => ({
+      const entries = (data ?? []).map(entry => ({
         ...entry,
         minutes: Number(entry.minutes),
         hourly_rate:
@@ -109,8 +114,14 @@ export function FilterProvider({ children }: { children: ReactNode }) {
           entry.total !== null && entry.total !== undefined ? Number(entry.total) : undefined,
         work_date: String(entry.work_date),
         created_at: String(entry.created_at)
-      }))
-    );
+      }));
+
+      allEntries = [...allEntries, ...entries];
+      shouldContinue = entries.length === batchSize;
+      from += batchSize;
+    }
+
+    setFilteredEntries(allEntries);
     setLoading(false);
   };
 

@@ -32,7 +32,22 @@ const categoryLabels: Record<string, string> = {
 
 export function AIInsights() {
   const { aiInsights } = useFilters();
-  const insights = [...aiInsights].sort((a, b) => (a.priority || 99) - (b.priority || 99));
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+
+  const currentMonthInsights = [...aiInsights]
+    .filter(insight => {
+      const date = new Date(insight.generated_at);
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+    })
+    .sort((a, b) => new Date(b.generated_at).getTime() - new Date(a.generated_at).getTime())
+    .slice(0, 6);
+
+  const insights = currentMonthInsights.length
+    ? currentMonthInsights
+    : [...aiInsights]
+        .sort((a, b) => new Date(b.generated_at).getTime() - new Date(a.generated_at).getTime())
+        .slice(0, 6);
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">

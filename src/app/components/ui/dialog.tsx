@@ -38,7 +38,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/20",
         className,
       )}
       {...props}
@@ -51,13 +51,40 @@ function DialogContent({
   children,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content>) {
+  const [offset, setOffset] = React.useState({ x: 0, y: 0 });
+  const dragging = React.useRef(false);
+  const start = React.useRef({ x: 0, y: 0 });
+
+  const onMouseMove = React.useCallback((e: MouseEvent) => {
+    if (!dragging.current) return;
+    setOffset({ x: e.clientX - start.current.x, y: e.clientY - start.current.y });
+  }, []);
+
+  const onMouseUp = React.useCallback(() => {
+    dragging.current = false;
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  }, [onMouseMove]);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    // only start drag when starting from the dialog header
+    const target = e.target as HTMLElement;
+    if (!target.closest('[data-slot="dialog-header"]')) return;
+    dragging.current = true;
+    start.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        onMouseDown={onMouseDown}
+        style={{ transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px)` }}
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[1200px] gap-4 rounded-lg border p-6 shadow-lg duration-200",
           className,
         )}
         {...props}

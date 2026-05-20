@@ -27,11 +27,14 @@ export function TimelineCharts() {
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [filteredEntries]);
+  const minChartWidth = Math.max(760, chartData.length * 56);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Horas por Día</h3>
+        <div className="overflow-x-auto -mx-6 px-6">
+          <div style={{ minWidth: `${minChartWidth}px` }}>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={chartData}>
             <defs>
@@ -70,10 +73,14 @@ export function TimelineCharts() {
             />
           </AreaChart>
         </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Costos por Día</h3>
+        <div className="overflow-x-auto -mx-6 px-6">
+          <div style={{ minWidth: `${minChartWidth}px` }}>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={chartData}>
             <defs>
@@ -112,6 +119,8 @@ export function TimelineCharts() {
             />
           </AreaChart>
         </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     </div>
   );

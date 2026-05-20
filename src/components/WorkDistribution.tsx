@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useFilters } from '../contexts/FilterContext';
+
+const truncateLabel = (value: string, maxLength = 18) =>
+  value && value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
 
 export function WorkDistribution() {
   const { filteredEntries } = useFilters();
@@ -42,12 +45,13 @@ export function WorkDistribution() {
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Distribución por Área</h3>
         <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={areaData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+          <BarChart data={areaData} margin={{ left: 24, right: 24, top: 20, bottom: 60 }} barCategoryGap="24%">
             <XAxis
               dataKey="name"
               stroke="#9ca3af"
               tick={{ fill: '#9ca3af' }}
+              tickFormatter={truncateLabel}
+              interval={0}
               fontSize={11}
               angle={-45}
               textAnchor="end"
@@ -71,12 +75,13 @@ export function WorkDistribution() {
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Distribución por Sector</h3>
         <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={sectorData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+          <BarChart data={sectorData} margin={{ left: 24, right: 24, top: 20, bottom: 60 }} barCategoryGap="24%">
             <XAxis
               dataKey="name"
               stroke="#9ca3af"
               tick={{ fill: '#9ca3af' }}
+              tickFormatter={truncateLabel}
+              interval={0}
               fontSize={11}
               angle={-45}
               textAnchor="end"

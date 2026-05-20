@@ -10,6 +10,9 @@ interface TreemapData {
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
+const truncateLabel = (label: string, maxLength = 14) =>
+  label && label.length > maxLength ? `${label.slice(0, maxLength)}...` : label;
+
 export function ClientSectorTreemap() {
   const { filteredEntries } = useFilters();
 
@@ -45,42 +48,70 @@ export function ClientSectorTreemap() {
     return [{ name: 'Distribución', children }];
   }, [filteredEntries]);
 
-  const CustomizedContent = (props: any) => {
-    const { x, y, width, height, name, depth, index } = props;
+ const CustomizedContent = (props: any) => {
+  const { x, y, width, height, name, depth, index } = props;
 
-    if (width < 40 || height < 40) return null;
+  // No renderizar bloques demasiado pequeños
+  if (!width || !height || width < 90 || height < 32) return null;
 
-    const color = COLORS[index % COLORS.length];
+  const safeName: string = typeof name === 'string' ? name : String(name ?? '');
+  const safeIndex = typeof index === 'number' ? index : 0;
 
-    return (
-      <g>
-        <rect
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          style={{
-            fill: color,
-            stroke: '#1f2937',
-            strokeWidth: 2,
-            opacity: depth === 1 ? 0.8 : 0.5
-          }}
-        />
-        {width > 60 && height > 30 && (
-          <text
-            x={x + width / 2}
-            y={y + height / 2}
-            textAnchor="middle"
-            fill="#fff"
-            fontSize={depth === 1 ? 14 : 11}
-            fontWeight={depth === 1 ? 'bold' : 'normal'}
-          >
-            {name && name.length > 15 ? `${name.substring(0, 15)}...` : name}
-          </text>
-        )}
-      </g>
-    );
-  };
+  const color = COLORS[safeIndex % COLORS.length];
+
+  // Ajustes dinámicos
+  const fontSize = depth === 1 ? 13 : 11;
+  const padding = 8;
+
+  // Calcular caracteres según ancho real
+  const approxChars = Math.max(
+    8,
+    Math.floor((width - padding * 2) / (fontSize * 0.6))
+  );
+
+  const label = truncateLabel(safeName, approxChars) || '';
+
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        rx={4}
+        ry={4}
+        style={{
+          fill: color,
+          stroke: '#111827',
+          strokeWidth: 1.5,
+          opacity: depth === 1 ? 0.9 : 0.75
+        }}
+      />
+
+      {/* Fondo oscuro para mejorar lectura */}
+      <rect
+        x={x + 4}
+        y={y + 4}
+        width={Math.min(width - 8, label.length * fontSize * 0.65)}
+        height={20}
+        rx={4}
+        fill="rgba(0,0,0,0.35)"
+      />
+
+      <text
+        x={x + padding}
+        y={y + 18}
+        fill="#ffffff"
+        fontSize={fontSize}
+        fontWeight={600}
+        dominantBaseline="middle"
+        pointerEvents="none"
+      >
+        {label}
+      </text>
+    </g>
+  );
+};
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
@@ -95,7 +126,7 @@ export function ClientSectorTreemap() {
         >
           <Tooltip
             contentStyle={{
-              backgroundColor: '#1f2937',
+              backgroundColor: '#cedaeb',
               border: '1px solid #374151',
               borderRadius: '8px',
               color: '#fff'

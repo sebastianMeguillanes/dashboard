@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useFilters } from '../contexts/FilterContext';
 
+const truncateLabel = (value: string, maxLength = 20) =>
+    value && value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
 export function TopProjects() {
   const { filteredEntries } = useFilters();
 
@@ -44,8 +46,10 @@ export function TopProjects() {
               dataKey="name"
               stroke="#9ca3af"
               tick={{ fill: '#9ca3af' }}
+              tickFormatter={truncateLabel}
+              interval={0}
               fontSize={11}
-              width={120}
+              width={180}
             />
             <Tooltip
               contentStyle={{
@@ -72,8 +76,10 @@ export function TopProjects() {
               dataKey="name"
               stroke="#9ca3af"
               tick={{ fill: '#9ca3af' }}
+              tickFormatter={truncateLabel}
+              interval={0}
               fontSize={11}
-              width={120}
+              width={180}
             />
             <Tooltip
               contentStyle={{
