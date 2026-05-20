@@ -31,7 +31,7 @@ function KPICard({ title, value, subtitle, trend, icon, sparkline }: KPICardProp
       <div className="space-y-1">
         <p className="text-sm text-gray-400">{title}</p>
         <p className="text-3xl font-semibold text-white">{value}</p>
-        <p className="text-xs text-gray-500">{subtitle}</p>
+        <p className="text-2xl text-gray-500">{subtitle}</p>
       </div>
       {sparkline && sparkline.length > 0 && (
         <div className="mt-4 h-12 flex items-end gap-1">

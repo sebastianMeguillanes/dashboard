@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Filter, X, Calendar as CalendarIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { useFilters } from '../contexts/FilterContext';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
-import { Range } from 'react-day-picker';
+
+// Local type for react-day-picker range selection (avoid direct import issues)
+type DayRange = { from?: Date | undefined; to?: Date | undefined } | undefined;
 import {
   Dialog,
   DialogTrigger,
@@ -17,8 +19,9 @@ import { Calendar } from '../app/components/ui/calendar';
 
 export function FilterPanel() {
   const { filters, setFilters, resetFilters, availableOptions, filteredEntries } = useFilters();
-  const [open, setOpen] = useState(false);
-  const [selectedRange, setSelectedRange] = useState<Range | undefined>({
+  const [open, setOpen] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [selectedRange, setSelectedRange] = useState<DayRange>({
     from: filters.dateRange.start,
     to: filters.dateRange.end
   });
@@ -66,7 +69,7 @@ export function FilterPanel() {
   ];
 
 
-  const handleRangeSelect = (range: Range | undefined) => {
+  const handleRangeSelect = (range: DayRange) => {
     setSelectedRange(range);
     if (range?.from && range.to) {
       setDateRange(range.from, range.to);
@@ -183,8 +186,8 @@ export function FilterPanel() {
                       <div className="mt-4 rounded-3xl border border-gray-800 bg-gray-900 p-3">
                         <Calendar
                           mode="range"
-                          selected={selectedRange}
-                          onSelect={handleRangeSelect}
+                          selected={selectedRange as any}
+                          onSelect={(r: any) => handleRangeSelect(r)}
                           className="rounded-3xl border border-gray-800"
                         />
                       </div>
@@ -248,21 +251,48 @@ export function FilterPanel() {
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="inline-flex justify-center rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+                    disabled={saving}
+                    className="inline-flex justify-center rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 disabled:opacity-50"
                   >
                     Cerrar
                   </button>
-                  <DialogClose asChild>
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
-                    >
-                      Guardar y cerrar
-                    </button>
-                  </DialogClose>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setSaving(true);
+                      // small delay to simulate loading data
+                      await new Promise((res) => setTimeout(res, 1000));
+                      setSaving(false);
+                      setOpen(false);
+                    }}
+                    disabled={saving}
+                    className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+                  >
+                    {saving ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        Cargando...
+                      </>
+                    ) : (
+                      'Guardar y cerrar'
+                    )}
+                  </button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {/* Floating filter button: always visible */}
+            <button
+              onClick={() => setOpen(true)}
+              aria-label="Abrir filtros"
+              className="fixed right-6 bottom-6 z-50 flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500"
+            >
+              <Filter className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm font-medium">Filtros</span>
+            </button>
 
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <CalendarIcon className="w-4 h-4" />
