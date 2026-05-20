@@ -137,15 +137,15 @@ export function KPICards() {
         title="Cliente Principal"
         value={metrics.topClient ? `${(metrics.topClient[1] / 60).toFixed(0)}h` : 'N/A'}
         subtitle={metrics.topClient ? metrics.topClient[0] : 'Sin datos'}
-        icon={<Target className="w-5 h-5 text-cyan-400" />}
+        icon={<Target className="w-5 h-10 text-cyan-400" />}
       />
-      <KPICard
+      {/* <KPICard
         title="Rentabilidad Estimada"
         value={`${metrics.profitability.toFixed(1)}%`}
         subtitle="Margen proyectado"
         trend={metrics.profitability - 25}
         icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
-      />
+      /> */}
     </div>
   );
 }

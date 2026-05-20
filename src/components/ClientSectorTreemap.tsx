@@ -10,7 +10,7 @@ interface TreemapData {
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
-const truncateLabel = (label: string, maxLength = 14) =>
+const truncateLabel = (label: string, maxLength = 20) =>
   label && label.length > maxLength ? `${label.slice(0, maxLength)}...` : label;
 
 export function ClientSectorTreemap() {
