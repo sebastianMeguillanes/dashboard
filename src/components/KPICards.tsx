@@ -110,13 +110,13 @@ export function KPICards() {
         title="Horas Totales"
         value={metrics.totalHours.toFixed(0)}
         subtitle="Mes actual"
-        // trend={metrics.variation}
+        trend={metrics.variation}
         icon={<Clock className="w-5 h-5 text-blue-400" />}
         sparkline={metrics.dailyHours}
       />
       <KPICard
         title="Costos Totales"
-        value={`$${(metrics.totalCost / 1000).toFixed(1)}k`}
+        value={`Bs.${(metrics.totalCost / 1000).toFixed(1)}k`}
         subtitle="Inversión del período"
         // trend={metrics.variation * 0.8}
         icon={<DollarSign className="w-5 h-5 text-green-400" />}
@@ -129,7 +129,7 @@ export function KPICards() {
       />
       <KPICard
         title="Proyecto Principal"
-        value={metrics.topProject ? `$${(metrics.topProject[1] / 1000).toFixed(1)}k` : 'N/A'}
+        value={metrics.topProject ? `Bs.${(metrics.topProject[1] / 1000).toFixed(1)}k` : 'N/A'}
         subtitle={metrics.topProject ? metrics.topProject[0] : 'Sin datos'}
         icon={<Briefcase className="w-5 h-5 text-orange-400" />}
       />
